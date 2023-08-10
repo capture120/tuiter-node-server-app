@@ -13,7 +13,9 @@ const app = express(); // make sure to include the extension
 // configure cors right after instantiating express
 app.use(cors({
     credentials: true,
-    origin: process.env.FRONTEND_URL,
+    // the url that is allowed to send HTTP requests to this node server
+    // prevents HTTP requests from unwanted sites (will not send a response back)
+    origin: process.env.FRONTEND_URL, 
 }
 ))
 
@@ -23,6 +25,8 @@ const sessionOptions = {
     resave: false,
     saveUninitialized: false,
 };
+// if not in the development environment, set cookies for the production environment to allow 
+// for user authentication sessions to be stored and remembered
 if (process.env.NODE_ENV !== "development") {
     sessionOptions.proxy = true;
     sessionOptions.cookie = {
