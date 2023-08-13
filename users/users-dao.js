@@ -1,3 +1,6 @@
+/*
+    users-dao.js is called by auth-controller. Unrelated to users.js and users-controller (was a primitive, earlier example)
+*/
 // for testing we have default user
 let users = [{ "username": "t", "password": "t", "_id": "12345" }];
 

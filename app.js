@@ -1,15 +1,20 @@
 import express from 'express';
 import cors from 'cors';
-import "dotenv/config"
-
+import "dotenv/config";
+import session from "express-session";
+import mongoose from "mongoose";
 import HelloController from './controllers/hello-controller.js';
 import UserController from './controllers/users-controller.js';
-import TuitsController from './controllers/tuits/tuits-controller.js';
-
-import session from "express-session";
+import TuitsController from './controllers/tuits-controller.js';
 import AuthController from "./controllers/auth-controller.js";
 
+/* connecting to local mongodb database */
+const CONNECTION_STRING = process.env.DB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/tuiter';
+mongoose.connect(CONNECTION_STRING);
+
+
 const app = express(); // make sure to include the extension
+
 // configure cors right after instantiating express
 app.use(cors({
     credentials: true,
