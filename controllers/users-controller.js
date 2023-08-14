@@ -1,73 +1,68 @@
-import people from '../users/users.js';
-
-// import the array of users. Include the extension
-let users = people;
+import * as usersDao from '../users/users-dao.js';
 
 // use express instance app to declare HTTP GET
 // request pattern /api/users to call a function
 const UserController = (app) => {
     app.get('/api/users', findUsers)
-    app.get('/api/users/:uid', findUserById);
+    app.get('/api/users/:id', findUserById);
     // map URL pattern to handler function
     app.post('/api/users', createUser);
-    app.delete('/api/users/:uid', deleteUser);
-    app.put('/api/users/:uid', updateUser);
+    app.delete('/api/users/:id', deleteUser);
+    app.put('/api/users/:id', updateUser);
 }
 
 // function invoked if URL matches pattern
-const createUser = (req, res) => {
-    // extract new user from BODY in request
-    const newUser = req.body;
-    // add an _id property with unique timestamp
-    newUser._id = (new Date()).getTime() + '';
-    users.push(newUser);
-    // respond with new user to client
+const createUser = async (req, res) => {
+    const newUser = await usersDao.createUser(req.body);
     res.json(newUser);
 }
 
 // handle PUT /api/users/:uid
-const updateUser = (req, res) => {
-    // get user ID from path
-    const userId = req.params['uid'];
-    // BODY includes updated fields
-    const updates = req.body;
-    users = users.map((usr) =>
-    usr._id === userId ? // merge old usr with new updates, otherwise keep the old user
-            { ...usr, ...updates } :
-            usr
-    );
-    res.sendStatus(200);
+const updateUser = async (req, res) => {
+    const id = req.params.id;
+    const status = await usersDao.updateUser(id, req.body);
+    const user = await usersDao.findUserById(id);
+    req.session["currentUser"] = user;
+    res.json(status);
 }
 
 
-const deleteUser = (req, res) => {
-    // get user ID from path parameter uid filter out the user
-    const userId = req.params['uid'];
-    users = users.filter(usr => usr._id !== userId);
-    // respond with success code
-    res.sendStatus(200);
+const deleteUser = async (req, res) => {
+    const id = req.params.id;
+    const status = await usersDao.deleteUser(id);
+    res.json(status);
 }
 
 // function called if URL matches pattern
-const findUserById = (req, res) => {
-    // get uid from request parameter map
-    const uid = req.params["uid"]; // or req.params.uid
-    const userWithId = users.find(user => user._id === uid);
-    // respond to client with user found
-    res.json(userWithId);
+const findUserById = async (req, res) => {
+    const id = req.params.id;
+    const user = await usersDao.findUserById(id);
+    res.json(user);
 }
 
 // function runs when /api/users requested
 // responds with JSON array of users
-const findUsers = (req, res) => {
-    const type = req.query.type;
-    // if the type parameter exists in the query, respond with users of that type, otherwise display all
-    if (type) {
-        const usersOfType = users.filter(user => user.type === type);
-        res.json(usersOfType);
-        return;
+const findUsers = async (req, res) => {
+    const username = req.query.username;
+    const password = req.query.password;
+    if (username && password) {
+        const user = await usersDao.findUserByCredentials(username, password);
+        if (user) {
+            res.json(user);
+        } else {
+            res.sendStatus(404);
+        }
+    } else if (username) {
+        const user = await usersDao.findUserByUsername(username);
+        if (user) {
+            res.json(user);
+        } else {
+            res.sendStatus(404);
+        }
+    } else {
+        const users = await usersDao.findAllUsers();
+        res.json(users);
     }
-    res.json(users)
 }
 
 // exports so app.js can import
