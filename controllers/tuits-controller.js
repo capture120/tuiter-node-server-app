@@ -1,10 +1,24 @@
 import * as tuitsDao from '../tuits/tuits-dao.js';
+import * as usersDao from '../users/users-dao.js';
 
 // retrieve data from HTTP body
-const createTuit = async (req, res) => { 
+const createTuit = async (req, res) => {
+    const currentUser = req.session.currentUser;
+    if (!currentUser) {
+        res.sendStauts(401);
+        return;
+    }
+    // const user = usersDao.findUserById(currentUser._id);
     const newTuit = req.body;
     newTuit.likes = 0;
     newTuit.liked = false;
+
+
+    newTuit.time = new Date();
+    newTuit.handle = `@${currentUser.username}`;
+    newTuit.username = currentUser.username;
+    newTuit.image = "owl.jpg"
+
     // actual tuit inserted in database with DAO's createTuit
     const insertedTuit = await tuitsDao.createTuit(newTuit);
     // respond with actual inserted tuit
@@ -17,14 +31,14 @@ const findTuits = async (req, res) => {
     res.json(tuits);
 }
 
-const updateTuit = async (req, res) => { 
+const updateTuit = async (req, res) => {
     const tuit_id_to_update = req.params.tid;
     const updates = req.body;
     const status = await tuitsDao.updateTuit(tuit_id_to_update, updates);
     res.sendStatus(200);
 }
 
-const deleteTuit = async (req, res) => { 
+const deleteTuit = async (req, res) => {
     const tuit_id_to_delete = req.params["tid"];
     // success/failer status deleting record from database
     const status = await tuitsDao.deleteTuit(tuit_id_to_delete);
